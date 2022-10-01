@@ -15,7 +15,7 @@ exports.createPost = async (req , res) =>{
         owner : req.user._id,
     }
     const newPost = await Post.create(newPostData);
-    const user = await User.findOne(req.user._id);
+    const user = await User.findById(req.user._id);
     user.posts.push(newPost._id);//nayi post bnai uski id humne pass kar di hai humne
     await user.save();
 
@@ -39,18 +39,26 @@ exports.createPost = async (req , res) =>{
 exports.likeandUnlikePost = async function (req, res){
 try{
   const post = await Post.findById(req.params.id);
+  console.log(post)
   if (!post) {
     return res.status(404).json({
       success : false,
       message : "Post not found"
     })
   }
+  console.log(req.user._id)
+  console.log(req.params.id)
+  console.log(post.likes.includes(req.user._id))
+  console.log(post.likes._id)
+  const index = post.likes.indexOf(req.user._id);
+    console.log(`${index}`)
   if(post.likes.includes(req.user._id)){
-    const index = post.likes.indexOf('req.user._id');// agar bhai  post ki array me already koi user exist krta hai to dubara touch krne pe usko splice krdo (pop) krdo
+    const index = post.likes.indexOf(req.user._id);
+    console.log(`${index}`)// agar bhai  post ki array me already koi user exist krta hai to dubara touch krne pe usko splice krdo (pop) krdo
     post.likes.splice(index ,1 ) 
     //jo wala index hume diya gaya hai waha se delete kro 1 element
-    await post.updateOne({$pull : {likes : req.user._Id}});// ye bhi kr skte hai
-   post.likes.pull(req.user._id);
+  
+    
    await post.save();
    return res.status(200).json({
     success: true,
@@ -104,6 +112,21 @@ exports.deletePost = async function(req, res ){
     })
   }
   catch(err){
+    res.status(500).json({
+      success : false,
+      message : err.message
+    })
+  }
+}
+exports.getPostOfFollowing = async function(req, res){
+  try{
+    const user = await User.findById(req.user._id);
+    
+res.status({
+  success : true,
+   user,
+})
+  }catch(err){
     res.status(500).json({
       success : false,
       message : err.message

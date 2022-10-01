@@ -48,7 +48,7 @@ try {
   res.status(200).cookie("token", token , {expires: new Date(Date.now() + 90*24*60*60*1000),
     httpOnly: true
 }).json({
-     success : false,
+     success : true,
      user , 
      token ,
   });
@@ -58,4 +58,51 @@ try {
     message : error.message,
  })
 }
+}
+exports.followUser = async (req , res) => {
+  try{
+    const userToFollow = await User.findById(req.params.id);
+    const loggedInUser = await User.findById(req.user._id);
+    if (!userToFollow){
+      return res.status(404).json({
+        success : false,
+        message : "User nhi mil rha bhai"
+      })
+    }
+  
+    if (loggedInUser.following.includes(userToFollow._id)){
+     
+    
+    const indexfollowing= loggedInUser.following.indexOf(userToFollow._id);
+   loggedInUser.following.splice(indexfollowing,1)
+
+   const indexfollowers = userToFollow.followers.indexOf(loggedInUser._id);
+    userToFollow.followers.splice(indexfollowers,1);
+
+    await loggedInUser.save();
+    await userToFollow.save();
+    res.status(200).json({
+      status : true,
+      message : "Unfollowed"
+
+    })
+  }
+    else{
+      loggedInUser.following.push(userToFollow._id);
+      userToFollow.followers.push(loggedInUser._id);
+      await loggedInUser.save();
+      await userToFollow.save();
+      res.status(200).json({
+        success: true ,
+        message : "Followed user successfully"
+  
+      })
+    }
+
+  }catch (error) {
+    res.status(500).json({
+      success : false,
+      message : error.message,
+    })
+  }
 }
